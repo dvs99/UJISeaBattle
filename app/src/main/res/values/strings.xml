@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">UJISeaBattle</string>
+    <string name="bg_ship">A background with a ship</string>
+    <string name="play">Play game!</string>
+    <string name="sound">Sound</string>
+    <string name="smart_oponent">Smart oponent</string>
+</resources>
