@@ -13,7 +13,7 @@
         android:layout_gravity="center"
         android:contentDescription="@string/bg_ship"
         android:scaleType="centerCrop"
-        android:src="@drawable/ship"
+        android:src="@drawable/ship_background"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
