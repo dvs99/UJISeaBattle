@@ -2,8 +2,11 @@ package es.uji.al375496.ujiseabattle.controller
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.util.Log
+import es.uji.al375496.ujiseabattle.Assets
 import es.uji.al375496.ujiseabattle.model.data.Board
 import es.uji.al375496.ujiseabattle.model.data.Position
+import es.uji.al375496.ujiseabattle.model.data.Ship
 import es.uji.vj1229.framework.Graphics
 import es.uji.vj1229.framework.IGameController
 import es.uji.vj1229.framework.TouchHandler
@@ -21,7 +24,20 @@ class SeaBattleGameController (private val width: Int, private val height: Int, 
         const val BOARD_CELL_COLOR = -0xfc000
         const val BOARD_HEIGHT = 10
         const val BOARD_WIDTH = 10
+        const val SHIP_HORIZONTAL_SPACING = 1
+        const val SHIP1_AMOUNT = 4
+        const val SHIP2_AMOUNT = 3
+        const val SHIP3_AMOUNT = 2
+        const val SHIP4_AMOUNT = 1
+        const val SHIP1_LENGTH = 1
+        const val SHIP2_LENGTH = 2
+        const val SHIP3_LENGTH = 3
+        const val SHIP4_LENGTH = 4
         val PLAYER_BOARD_POSITION = Position(1, 2)
+        val SHIP1_POSITION = Position(14, 9)
+        val SHIP2_POSITION = Position(14, 7)
+        val SHIP3_POSITION = Position(14, 5)
+        val SHIP4_POSITION = Position(14, 3)
     }
 
     private val graphics = Graphics(width, height)
@@ -31,6 +47,20 @@ class SeaBattleGameController (private val width: Int, private val height: Int, 
     private val yOffset = (height - TOTAL_CELLS_HEIGHT*cellSide) / 2.0f
 
     private val boards = arrayOf(Board(PLAYER_BOARD_POSITION, BOARD_WIDTH, BOARD_HEIGHT))
+    private val ships = mutableListOf<Ship>()
+
+    init {
+        Assets.createResizedAssets(context, cellSide.toInt())
+
+        for(i : Int in 0 until SHIP1_AMOUNT)
+            ships.add(Ship(Position(SHIP1_POSITION.x + ((SHIP1_LENGTH + SHIP_HORIZONTAL_SPACING) * i), SHIP1_POSITION.y), SHIP1_LENGTH, true))
+        for(i : Int in 0 until SHIP2_AMOUNT)
+            ships.add(Ship(Position(SHIP2_POSITION.x + ((SHIP2_LENGTH + SHIP_HORIZONTAL_SPACING) * i), SHIP2_POSITION.y), SHIP2_LENGTH, true))
+        for(i : Int in 0 until SHIP3_AMOUNT)
+            ships.add(Ship(Position(SHIP3_POSITION.x + ((SHIP3_LENGTH + SHIP_HORIZONTAL_SPACING) * i), SHIP3_POSITION.y), SHIP3_LENGTH, true))
+        for(i : Int in 0 until SHIP4_AMOUNT)
+            ships.add(Ship(Position(SHIP4_POSITION.x + ((SHIP4_LENGTH + SHIP_HORIZONTAL_SPACING) * i), SHIP4_POSITION.y), SHIP4_LENGTH, true))
+    }
 
     override fun onUpdate(deltaTime: Float, touchEvents: MutableList<TouchHandler.TouchEvent>?) {
         //TODO("Not yet implemented")
@@ -61,7 +91,13 @@ class SeaBattleGameController (private val width: Int, private val height: Int, 
     }
 
     private fun drawShips() {
-
+        for (ship in ships){
+            if (ship.isHorizontal)
+                 graphics.drawBitmap(ship.horizontalImg,virtualXToRealX(ship.position.x.toFloat()), virtualYToRealY(ship.position.y.toFloat()))
+            else
+                graphics.drawBitmap(ship.verticalImg,virtualXToRealX(ship.position.x.toFloat()), virtualYToRealY(ship.position.y.toFloat()))
+            Log.d("DIEGODEBUG", ship.toString())
+        }
     }
 
     private fun virtualXToRealX(x: Float) : Float{
