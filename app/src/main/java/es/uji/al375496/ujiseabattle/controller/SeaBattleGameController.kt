@@ -2,28 +2,31 @@ package es.uji.al375496.ujiseabattle.controller
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.util.Log
 import es.uji.al375496.ujiseabattle.Assets
 import es.uji.al375496.ujiseabattle.model.SeaBattleModel
 import es.uji.al375496.ujiseabattle.model.SeaBattleState
 import es.uji.al375496.ujiseabattle.model.data.Board
 import es.uji.al375496.ujiseabattle.model.data.Position
 import es.uji.al375496.ujiseabattle.model.data.Ship
+import es.uji.vj1229.framework.AnimatedBitmap
 import es.uji.vj1229.framework.Graphics
 import es.uji.vj1229.framework.IGameController
 import es.uji.vj1229.framework.TouchHandler
 import java.lang.Float.min
 
-class SeaBattleGameController (private val width: Int, private val height: Int, private val context: Context, private val useSound: Boolean, private val useSmartOpponent: Boolean) : IGameController {
+class SeaBattleGameController (width: Int, height: Int, context: Context, private val useSound: Boolean, private val useSmartOpponent: Boolean) : IGameController {
 
     //TODO: set right colors
     private companion object Constants{
         const val TOTAL_CELLS_WIDTH = 24
         const val TOTAL_CELLS_HEIGHT = 14
         const val BACKGROUND_COLOR = -0xf
+        const val HIT_COLOR = -0xfc000
         const val CROSS_PADDING = 0.2F
         const val BOARD_LINE_WIDTH = 0.1f
         const val BOARD_LINE_COLOR = -0x1000000
-        const val BOARD_CELL_COLOR = -0xfc000
+        const val BOARD_CELL_COLOR = -0xFF482B
         const val BOARD_HEIGHT = 10
         const val BOARD_WIDTH = 10
         const val SHIP_HORIZONTAL_SPACING = 1
@@ -41,7 +44,7 @@ class SeaBattleGameController (private val width: Int, private val height: Int, 
         val SHIP2_POSITION = Position(14f, 7f)
         val SHIP3_POSITION = Position(14f, 5f)
         val SHIP4_POSITION = Position(14f, 3f)
-        val BUTTON_POS = Position(18f, 8f)
+        val BUTTON_POS = Position(16f, 5f)
     }
 
     private val graphics = Graphics(width, height)
@@ -54,13 +57,15 @@ class SeaBattleGameController (private val width: Int, private val height: Int, 
     private val ships = mutableListOf<Ship>()
 
     private var model : SeaBattleModel
+    var animation: AnimatedBitmap? = null
+    var animationPos = mutableListOf<Position>()
 
     var showBattleButton = false
     var showAIBoard = false
 
 
     init {
-        Assets.createResizedAssets(context, cellSide.toInt())
+        Assets.createAndResizeAssets(context, cellSide.toInt())
         for(i : Int in 0 until SHIP4_AMOUNT)
             ships.add(Ship(Position(SHIP4_POSITION.x + ((SHIP4_LENGTH + SHIP_HORIZONTAL_SPACING) * i), SHIP4_POSITION.y), SHIP4_LENGTH, true))
         for(i : Int in 0 until SHIP3_AMOUNT)
@@ -74,35 +79,45 @@ class SeaBattleGameController (private val width: Int, private val height: Int, 
     }
 
     override fun onUpdate(deltaTime: Float, touchEvents: MutableList<TouchHandler.TouchEvent>) {
-        for (event in touchEvents){
-            if (event.type == TouchHandler.TouchType.TOUCH_DOWN) {
-                if (model.state == SeaBattleState.PLACE_SHIPS)
-                    model.touchOrigin = Position(realXToVirtualX(event.x.toFloat()), realYToVirtualY(event.y.toFloat()))
+        if (model.state == SeaBattleState.WAITING){
+            if(animation != null){
+                animation!!.update(deltaTime)
+                Log.d("DIEGODEBUG", "animation playing ${animation!!.currentFrame}")
+                if (animation!!.isEnded)
+                    model.onAnimationEnd()
             }
-            else if (event.type == TouchHandler.TouchType.TOUCH_DRAGGED) {
-                if(model.state == SeaBattleState.DRAG_INSIDE_BOARD || model.state == SeaBattleState.DRAG_INTO_BOARD)
-                    model.drag(Position(realXToVirtualX(event.x.toFloat()), realYToVirtualY(event.y.toFloat())))
-                else if (model.state == SeaBattleState.PLACE_SHIPS){
-                    model.startDrag()
-                    model.drag(Position(realXToVirtualX(event.x.toFloat()), realYToVirtualY(event.y.toFloat())))
+        }
+        else{
+            for (event in touchEvents){
+                if (event.type == TouchHandler.TouchType.TOUCH_DOWN) {
+                    if (model.state == SeaBattleState.PLACE_SHIPS)
+                        model.touchOrigin = Position(realXToVirtualX(event.x.toFloat()), realYToVirtualY(event.y.toFloat()))
                 }
-            }
-            else if (event.type == TouchHandler.TouchType.TOUCH_UP){
-                if(model.state == SeaBattleState.DRAG_INSIDE_BOARD || model.state == SeaBattleState.DRAG_INTO_BOARD)
-                    model.endDrag(Position(realXToVirtualX(event.x.toFloat()), realYToVirtualY(event.y.toFloat())))
+                else if (event.type == TouchHandler.TouchType.TOUCH_DRAGGED) {
+                    if(model.state == SeaBattleState.DRAG_INSIDE_BOARD || model.state == SeaBattleState.DRAG_INTO_BOARD)
+                        model.drag(Position(realXToVirtualX(event.x.toFloat()), realYToVirtualY(event.y.toFloat())))
+                    else if (model.state == SeaBattleState.PLACE_SHIPS){
+                        model.startDrag()
+                        model.drag(Position(realXToVirtualX(event.x.toFloat()), realYToVirtualY(event.y.toFloat())))
+                    }
+                }
+                else if (event.type == TouchHandler.TouchType.TOUCH_UP){
+                    if(model.state == SeaBattleState.DRAG_INSIDE_BOARD || model.state == SeaBattleState.DRAG_INTO_BOARD)
+                        model.endDrag(Position(realXToVirtualX(event.x.toFloat()), realYToVirtualY(event.y.toFloat())))
 
-                else if (model.state == SeaBattleState.PLACE_SHIPS){
-                    //check for button press
-                    if (showBattleButton && Assets.battleButton!= null && (model.state == SeaBattleState.DRAG_INSIDE_BOARD || model.state == SeaBattleState.DRAG_INTO_BOARD
-                                    || model.state == SeaBattleState.PLACE_SHIPS) && realXToVirtualX(event.x.toFloat()) > BUTTON_POS.x
-                            && realXToVirtualX(event.x.toFloat()) < BUTTON_POS.x + Assets.battleButton!!.width && realYToVirtualY(event.y.toFloat()) > BUTTON_POS.y
-                            && realYToVirtualY(event.y.toFloat()) < BUTTON_POS.y + Assets.battleButton!!.height)
-                        model.startBattle()
-                    else
+                    else if (model.state == SeaBattleState.PLACE_SHIPS){
+                        //check for button press
+                        if (showBattleButton && Assets.battleButton!= null && (model.state == SeaBattleState.DRAG_INSIDE_BOARD || model.state == SeaBattleState.DRAG_INTO_BOARD
+                                        || model.state == SeaBattleState.PLACE_SHIPS) && realXToVirtualX(event.x.toFloat()) > BUTTON_POS.x
+                                        && realXToVirtualX(event.x.toFloat()) < BUTTON_POS.x + Assets.battleButton!!.width && realYToVirtualY(event.y.toFloat()) > BUTTON_POS.y
+                                        && realYToVirtualY(event.y.toFloat()) < BUTTON_POS.y + Assets.battleButton!!.height)
+                            model.startBattle()
+                        else
+                            model.tap(Position(realXToVirtualX(event.x.toFloat()), realYToVirtualY(event.y.toFloat())))
+                    }
+                    else if (model.state == SeaBattleState.PLAYER_TURN){
                         model.tap(Position(realXToVirtualX(event.x.toFloat()), realYToVirtualY(event.y.toFloat())))
-                }
-                else if (model.state == SeaBattleState.PLAYER_TURN){
-                    model.tap(Position(realXToVirtualX(event.x.toFloat()), realYToVirtualY(event.y.toFloat())))
+                    }
                 }
             }
         }
@@ -114,6 +129,9 @@ class SeaBattleGameController (private val width: Int, private val height: Int, 
         drawBoards()
         drawShips()
         drawButton()
+        if (animation != null)
+            for (pos: Position in animationPos)
+                graphics.drawBitmap(animation!!.currentFrame, virtualXToRealX(pos.x), virtualYToRealY(pos.y))
         return graphics.frameBuffer
     }
 
@@ -146,8 +164,8 @@ class SeaBattleGameController (private val width: Int, private val height: Int, 
                     }
                     if (board.position == AI_BOARD_POSITION && !ship.sunk){
                         for (hit in ship.hits){
-                        drawLine(virtualXToRealX(hit.x + CROSS_PADDING), virtualYToRealY(hit.y + CROSS_PADDING), virtualXToRealX(hit.x+ 1f - CROSS_PADDING), virtualYToRealY(hit.y + 1f - CROSS_PADDING), virtualToReal(BOARD_LINE_WIDTH), BACKGROUND_COLOR)
-                        drawLine(virtualXToRealX(hit.x + 1f - CROSS_PADDING), virtualYToRealY(hit.y + CROSS_PADDING), virtualXToRealX(hit.x + CROSS_PADDING), virtualYToRealY(hit.y + 1f - CROSS_PADDING), virtualToReal(BOARD_LINE_WIDTH), BACKGROUND_COLOR)
+                        drawLine(virtualXToRealX(hit.x + CROSS_PADDING), virtualYToRealY(hit.y + CROSS_PADDING), virtualXToRealX(hit.x+ 1f - CROSS_PADDING), virtualYToRealY(hit.y + 1f - CROSS_PADDING), virtualToReal(BOARD_LINE_WIDTH), HIT_COLOR)
+                        drawLine(virtualXToRealX(hit.x + 1f - CROSS_PADDING), virtualYToRealY(hit.y + CROSS_PADDING), virtualXToRealX(hit.x + CROSS_PADDING), virtualYToRealY(hit.y + 1f - CROSS_PADDING), virtualToReal(BOARD_LINE_WIDTH), HIT_COLOR)
                         }
                     }
                 }

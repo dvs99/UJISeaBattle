@@ -1,6 +1,7 @@
 package es.uji.al375496.ujiseabattle.model.data
 
 import android.util.Log
+import java.util.*
 import kotlin.math.floor
 import kotlin.math.round
 
@@ -147,7 +148,8 @@ data class Board (var position: Position, val width: Int, val height: Int){
         return false
     }
 
-    fun tryHitAt(pos: Position) : Boolean {
+    //true if hits ship, false if hits water, null if not in board
+    fun tryHitAt(pos: Position) : Boolean? {
         val cellIndexes = getCellIndexesAtPosition(pos)
         if (cellIndexes != null){
             val x = cellIndexes.x.toInt()
@@ -156,11 +158,15 @@ data class Board (var position: Position, val width: Int, val height: Int){
                 val cellPos = getCellPosition(pos)
                 if (cellPos != null){
                     cells[x][y].hit = true
-                    cells[x][y].ship?.hit(cellPos)
-                    return true
+                    return if (cells[x][y].ship == null)
+                        false
+                    else{
+                        cells[x][y].ship?.hit(cellPos)
+                        true
+                    }
                 }
             }
         }
-    return false
+    return null
     }
 }

@@ -1,6 +1,7 @@
 package es.uji.al375496.ujiseabattle.model
 
 import android.util.Log
+import es.uji.al375496.ujiseabattle.Assets
 import es.uji.al375496.ujiseabattle.controller.SeaBattleGameController
 import es.uji.al375496.ujiseabattle.model.data.Board
 import es.uji.al375496.ujiseabattle.model.data.Position
@@ -22,6 +23,9 @@ class SeaBattleModel(private val controller: SeaBattleGameController, private va
     private var dragIsTap = true
 
     private var AIShips = mutableListOf<Ship>()
+
+    var stateAfterAnimationEnds = SeaBattleState.PLACE_SHIPS
+
     init {
         for (ship in unplacedShips)
             AIShips.add(Ship(Position(0f,0f), ship.length, ship.isHorizontal()))
@@ -131,7 +135,51 @@ class SeaBattleModel(private val controller: SeaBattleGameController, private va
         if(state == SeaBattleState.PLACE_SHIPS)
             playerBoard.rotateShipAt(pos)
         else if (state == SeaBattleState.PLAYER_TURN){
-            AIBoard.tryHitAt(pos)
+            val hitShip = AIBoard.tryHitAt(pos)
+            if (hitShip != null){
+                if (!hitShip) {
+                    //hit water
+                    stateAfterAnimationEnds = SeaBattleState.PLAYER_TURN //todo change to computer turn
+                    state = SeaBattleState.WAITING
+                    Assets.splashAnim?.restart()
+                    val animPos = AIBoard.getCellPosition(pos)
+                    if (animPos!= null){
+                        controller.animationPos.add(animPos)
+                        controller.animation = Assets.splashAnim
+                    }
+                } else {
+                    val ship = AIBoard.getShipAt(pos)
+                    if (ship != null){
+                        if (ship.sunk) {
+                            //ship sunk
+                            stateAfterAnimationEnds = SeaBattleState.PLAYER_TURN
+                            state = SeaBattleState.WAITING
+                            Assets.explosionAnim?.restart()
+                            val animPos = AIBoard.getCellPosition(ship.position)
+                            if (animPos!= null){
+                                for (i in 0 until ship.length){
+                                    if (ship.isHorizontal())
+                                        controller.animationPos.add(Position(animPos.x+i, animPos.y))
+                                    else
+                                        controller.animationPos.add(Position(animPos.x, animPos.y+i))
+                                }
+                                controller.animation = Assets.explosionAnim
+
+                            }
+                        } else {
+                            //ship hit
+                            stateAfterAnimationEnds = SeaBattleState.PLAYER_TURN
+                            state = SeaBattleState.WAITING
+                            Assets.smokeAnim?.restart()
+                            val animPos = AIBoard.getCellPosition(pos)
+                            if (animPos!= null){
+                                controller.animationPos.add(animPos)
+                                controller.animation = Assets.smokeAnim
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -155,6 +203,12 @@ class SeaBattleModel(private val controller: SeaBattleGameController, private va
             }
             while (!AIBoard.addShip(ship, Position(x.toFloat(), y.toFloat())))
         }
+    }
+
+    fun onAnimationEnd() {
+        state = stateAfterAnimationEnds
+        controller.animation = null
+        controller.animationPos.clear()
     }
 }
 
