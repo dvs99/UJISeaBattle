@@ -15,6 +15,9 @@ object Assets {
     private const val SHIP3_LENGTH = 3
     private const val SHIP4_LENGTH = 4
 
+    private const val BUTTON_HEIGHT = 4
+    private const val BUTTON_WIDTH = 4
+
     //TODO
     private const val SPLASH_ROWS = 0
     private const val SPLASH_COLUMNS = 0
@@ -28,18 +31,33 @@ object Assets {
     //end todo
 
     var horizontalShip1 : Bitmap? = null
+        private set
     var horizontalShip2 : Bitmap? = null
+        private set
     var horizontalShip3 : Bitmap? = null
+        private set
     var horizontalShip4 : Bitmap? = null
+        private set
+
     var verticalShip1 : Bitmap? = null
+        private set
     var verticalShip2 : Bitmap? = null
+        private set
     var verticalShip3 : Bitmap? = null
+        private set
     var verticalShip4 : Bitmap? = null
+        private set
+
+    var battleButton : Bitmap? = null
+        private set
 
     private var splash : SpriteSheet? = null
     var splashAnim : AnimatedBitmap? = null
+        private set
+
     private var explosion : SpriteSheet? = null
     var explosionAnim : AnimatedBitmap? = null
+        private set
 
     fun loadDrawableAssets(context: Context) {
         val resources : Resources = context.resources
@@ -73,6 +91,7 @@ object Assets {
         horizontalShip4 = Bitmap.createScaledBitmap(
             BitmapFactory.decodeResource(resources, R.drawable.ship4),
             cellSize * SHIP4_LENGTH, cellSize, true)
+
         verticalShip1?.recycle()
         verticalShip1 = Bitmap.createScaledBitmap(
             BitmapFactory.decodeResource(resources, R.drawable.ship1v),
@@ -88,7 +107,12 @@ object Assets {
         verticalShip4?.recycle()
         verticalShip4 = Bitmap.createScaledBitmap(
             BitmapFactory.decodeResource(resources, R.drawable.ship4v),
-            cellSize, cellSize * SHIP4_LENGTH, false)
+            cellSize, cellSize * SHIP4_LENGTH, true)
+
+        battleButton?.recycle()
+        battleButton = Bitmap.createScaledBitmap(
+                BitmapFactory.decodeResource(resources, R.drawable.battle),
+                cellSize * BUTTON_WIDTH, cellSize * BUTTON_HEIGHT, true)
 
         //TODO
         /*val frames = ArrayList<Bitmap>()

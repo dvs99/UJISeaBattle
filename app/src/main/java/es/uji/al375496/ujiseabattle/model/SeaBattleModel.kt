@@ -1,12 +1,14 @@
 package es.uji.al375496.ujiseabattle.model
 
 import android.util.Log
+import es.uji.al375496.ujiseabattle.controller.SeaBattleGameController
 import es.uji.al375496.ujiseabattle.model.data.Board
 import es.uji.al375496.ujiseabattle.model.data.Position
 import es.uji.al375496.ujiseabattle.model.data.Ship
 import kotlin.math.abs
+import kotlin.random.Random
 
-class SeaBattleModel(private val playerBoard: Board, private val AIBoard: Board, private val unplacedShips: MutableList<Ship>) {
+class SeaBattleModel(private val controller: SeaBattleGameController, private val playerBoard: Board, private val AIBoard: Board, private val unplacedShips: MutableList<Ship>) {
     private companion object Constants{
         const val MIN_DRAG = 0.2f
     }
@@ -14,13 +16,19 @@ class SeaBattleModel(private val playerBoard: Board, private val AIBoard: Board,
     var state = SeaBattleState.PLACE_SHIPS
         private set
     var touchOrigin = Position(0f,0f)
+
     private var shipStartingPos = Position(0f,0f)
     private var shipIndex = 0
     private var dragIsTap = true
 
+    private var AIShips = mutableListOf<Ship>()
+    init {
+        for (ship in unplacedShips)
+            AIShips.add(Ship(Position(0f,0f), ship.length, ship.isHorizontal()))
+    }
+
     fun startDrag() {
         if (state == SeaBattleState.PLACE_SHIPS) {
-            Log.d("DIEGODEBUG", "try drag")
             //test if the drag starts in an unplaced ship
             for (i in 0 until unplacedShips.size)
                 if (unplacedShips[i].isTouched(touchOrigin)) {
@@ -28,7 +36,6 @@ class SeaBattleModel(private val playerBoard: Board, private val AIBoard: Board,
                     shipStartingPos = Position(unplacedShips[i].position.x, unplacedShips[i].position.y)
                     shipIndex = i
                     dragIsTap=true
-                    Log.d("DIEGODEBUG", "dragging from unplaced")
                 }
 
             //test if the drag starts in a placed ship
@@ -37,7 +44,6 @@ class SeaBattleModel(private val playerBoard: Board, private val AIBoard: Board,
                 state = SeaBattleState.DRAG_INSIDE_BOARD
                 shipStartingPos = Position(ship.position.x, ship.position.y)
                 dragIsTap=true
-                Log.d("DIEGODEBUG", "dragging from placed")
             }
         }
     }
@@ -90,6 +96,7 @@ class SeaBattleModel(private val playerBoard: Board, private val AIBoard: Board,
                     unplacedShips[shipIndex].position = shipStartingPos
                 state = SeaBattleState.PLACE_SHIPS
             }
+            checkFinishedPlacing()
         }
 
         if (state == SeaBattleState.DRAG_INSIDE_BOARD) {
@@ -111,11 +118,43 @@ class SeaBattleModel(private val playerBoard: Board, private val AIBoard: Board,
                 }
             }
             state = SeaBattleState.PLACE_SHIPS
+            checkFinishedPlacing()
         }
     }
 
+    private fun checkFinishedPlacing() {
+        if (state == SeaBattleState.PLACE_SHIPS && unplacedShips.size == 0)
+            controller.showBattleButton = true
+    }
+
     fun tap(pos: Position) {
-        playerBoard.rotateShipAt(pos)
+        if(state == SeaBattleState.PLACE_SHIPS)
+            playerBoard.rotateShipAt(pos)
+        else if (state == SeaBattleState.PLAYER_TURN){
+            AIBoard.tryHitAt(pos)
+        }
+    }
+
+    fun startBattle() {
+        state = SeaBattleState.WAITING
+        controller.showBattleButton = false
+        placeAIShips()
+        controller.showAIBoard = true
+        state = SeaBattleState.PLAYER_TURN
+    }
+
+    private fun placeAIShips() {
+        for (ship in AIShips){
+            val xRange = AIBoard.position.x.toInt() until(AIBoard.position.x.toInt() + AIBoard.width)
+            val yRange = AIBoard.position.y.toInt() until(AIBoard.position.y.toInt() + AIBoard.height)
+            do{
+                val x = xRange.random()
+                val y = yRange.random()
+                if((0..1).random() == 0)
+                    ship.rotate()
+            }
+            while (!AIBoard.addShip(ship, Position(x.toFloat(), y.toFloat())))
+        }
     }
 }
 

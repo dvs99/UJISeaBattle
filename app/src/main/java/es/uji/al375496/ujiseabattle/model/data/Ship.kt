@@ -3,7 +3,9 @@ package es.uji.al375496.ujiseabattle.model.data
 import android.graphics.Bitmap
 import es.uji.al375496.ujiseabattle.Assets
 
-data class Ship (var position: Position, val length: Int, var isHorizontal: Boolean) {
+data class Ship (var position: Position, val length: Int, private var isHorizontal: Boolean) {
+    var hits = mutableListOf<Position>()
+
     var sunk = false
         private set
 
@@ -25,7 +27,7 @@ data class Ship (var position: Position, val length: Int, var isHorizontal: Bool
     var currentImg = if (isHorizontal) horizontalImg else verticalImg
         private set
 
-    fun sink(){
+    private fun sink(){
         sunk = true
         //TODO: sunk sprites
     }
@@ -48,5 +50,16 @@ data class Ship (var position: Position, val length: Int, var isHorizontal: Bool
         isHorizontal = !isHorizontal
         currentImg = if (isHorizontal) horizontalImg else verticalImg
         //TODO: lists
+    }
+
+    fun isHorizontal() : Boolean{
+        return isHorizontal
+    }
+
+    //Assumes it has been checked to be actually a hit that hasn't been hit before and is valid for this ship
+    fun hit(pos: Position){
+        hits.add(pos.copy())
+        if (hits.size == length)
+            sink()
     }
 }
