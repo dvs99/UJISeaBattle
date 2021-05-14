@@ -1,3 +1,9 @@
 package es.uji.al375496.ujiseabattle.model.data
 
-data class Position(var x: Int, var y: Int)
+import kotlin.math.floor
+
+data class Position(var x: Float, var y: Float){
+    fun isSameCell(otherPosition: Position): Boolean{
+        return floor(x) == floor(otherPosition.x) &&  floor(y) == floor(otherPosition.y)
+    }
+}

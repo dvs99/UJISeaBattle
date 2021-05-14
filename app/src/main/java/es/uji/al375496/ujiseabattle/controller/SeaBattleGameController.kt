@@ -2,8 +2,9 @@ package es.uji.al375496.ujiseabattle.controller
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.util.Log
 import es.uji.al375496.ujiseabattle.Assets
+import es.uji.al375496.ujiseabattle.model.SeaBattleModel
+import es.uji.al375496.ujiseabattle.model.SeaBattleState
 import es.uji.al375496.ujiseabattle.model.data.Board
 import es.uji.al375496.ujiseabattle.model.data.Position
 import es.uji.al375496.ujiseabattle.model.data.Ship
@@ -12,7 +13,7 @@ import es.uji.vj1229.framework.IGameController
 import es.uji.vj1229.framework.TouchHandler
 import java.lang.Float.min
 
-class SeaBattleGameController (private val width: Int, private val height: Int, context: Context, useSound: Boolean, useSmartOpponent: Boolean) : IGameController {
+class SeaBattleGameController (private val width: Int, private val height: Int, private val context: Context, private val useSound: Boolean, private val useSmartOpponent: Boolean) : IGameController {
 
     //TODO: set right colors
     private companion object Constants{
@@ -33,11 +34,11 @@ class SeaBattleGameController (private val width: Int, private val height: Int, 
         const val SHIP2_LENGTH = 2
         const val SHIP3_LENGTH = 3
         const val SHIP4_LENGTH = 4
-        val PLAYER_BOARD_POSITION = Position(1, 2)
-        val SHIP1_POSITION = Position(14, 9)
-        val SHIP2_POSITION = Position(14, 7)
-        val SHIP3_POSITION = Position(14, 5)
-        val SHIP4_POSITION = Position(14, 3)
+        val PLAYER_BOARD_POSITION = Position(1f, 2f)
+        val SHIP1_POSITION = Position(14f, 9f)
+        val SHIP2_POSITION = Position(14f, 7f)
+        val SHIP3_POSITION = Position(14f, 5f)
+        val SHIP4_POSITION = Position(14f, 3f)
     }
 
     private val graphics = Graphics(width, height)
@@ -48,6 +49,9 @@ class SeaBattleGameController (private val width: Int, private val height: Int, 
 
     private val boards = arrayOf(Board(PLAYER_BOARD_POSITION, BOARD_WIDTH, BOARD_HEIGHT))
     private val ships = mutableListOf<Ship>()
+
+    private var model : SeaBattleModel
+
 
     init {
         Assets.createResizedAssets(context, cellSide.toInt())
@@ -60,11 +64,33 @@ class SeaBattleGameController (private val width: Int, private val height: Int, 
             ships.add(Ship(Position(SHIP3_POSITION.x + ((SHIP3_LENGTH + SHIP_HORIZONTAL_SPACING) * i), SHIP3_POSITION.y), SHIP3_LENGTH, true))
         for(i : Int in 0 until SHIP4_AMOUNT)
             ships.add(Ship(Position(SHIP4_POSITION.x + ((SHIP4_LENGTH + SHIP_HORIZONTAL_SPACING) * i), SHIP4_POSITION.y), SHIP4_LENGTH, true))
+
+        model = SeaBattleModel(boards[0], boards[0], ships)
     }
 
-    override fun onUpdate(deltaTime: Float, touchEvents: MutableList<TouchHandler.TouchEvent>?) {
-        //TODO("Not yet implemented")
+    override fun onUpdate(deltaTime: Float, touchEvents: MutableList<TouchHandler.TouchEvent>) {
+        for (event in touchEvents){
+            if (event.type == TouchHandler.TouchType.TOUCH_DOWN) {
+                if (model.state == SeaBattleState.PLACE_SHIPS)
+                    model.touchOrigin = Position(realXToVirtualX(event.x.toFloat()), realYToVirtualY(event.y.toFloat()))
+            }
+            else if (event.type == TouchHandler.TouchType.TOUCH_DRAGGED) {
+                if(model.state == SeaBattleState.DRAG_INSIDE_BOARD || model.state == SeaBattleState.DRAG_INTO_BOARD)
+                    model.drag(Position(realXToVirtualX(event.x.toFloat()), realYToVirtualY(event.y.toFloat())))
+                else if (model.state == SeaBattleState.PLACE_SHIPS){
+                    model.startDrag()
+                    model.drag(Position(realXToVirtualX(event.x.toFloat()), realYToVirtualY(event.y.toFloat())))
+                }
+            }
+            else if (event.type == TouchHandler.TouchType.TOUCH_UP){
+                if(model.state == SeaBattleState.DRAG_INSIDE_BOARD || model.state == SeaBattleState.DRAG_INTO_BOARD)
+                    model.endDrag(Position(realXToVirtualX(event.x.toFloat()), realYToVirtualY(event.y.toFloat())))
+                else if (model.state == SeaBattleState.PLACE_SHIPS)
+                    model.tap(Position(realXToVirtualX(event.x.toFloat()), realYToVirtualY(event.y.toFloat())))
+            }
+        }
     }
+
 
     override fun onDrawingRequested(): Bitmap {
         graphics.clear(BACKGROUND_COLOR)
@@ -78,25 +104,24 @@ class SeaBattleGameController (private val width: Int, private val height: Int, 
         with(graphics) {
             for (board in boards) {
                 //background
-                drawRect(virtualXToRealX(board.position.x.toFloat()), virtualYToRealY(board.position.y.toFloat()), virtualToReal(board.width.toFloat()), virtualToReal(board.height.toFloat()), BOARD_CELL_COLOR)
+                drawRect(virtualXToRealX(board.position.x), virtualYToRealY(board.position.y), virtualToReal(board.width.toFloat()), virtualToReal(board.height.toFloat()), BOARD_CELL_COLOR)
                 //lines
-                for (x in board.position.x..(board.position.x + board.width)) {
+                for (x in board.position.x.toInt()..(board.position.x.toInt() + board.width)) {
                     drawLine(virtualXToRealX(x.toFloat()), virtualYToRealY(board.position.y - halfLineWidth),virtualXToRealX(x.toFloat()), virtualYToRealY(board.position.y + board.height + halfLineWidth), virtualToReal(BOARD_LINE_WIDTH), BOARD_LINE_COLOR)
                 }
-                for (y in board.position.y..(board.position.y + board.height)) {
+                for (y in board.position.y.toInt()..(board.position.y.toInt() + board.height)) {
                     drawLine(virtualXToRealX(board.position.x - halfLineWidth), virtualYToRealY(y.toFloat()),virtualXToRealX(board.position.x + board.width + halfLineWidth), virtualYToRealY(y.toFloat()), virtualToReal(BOARD_LINE_WIDTH), BOARD_LINE_COLOR)
                 }
+                //ships
+                for(ship in board.ships)
+                    graphics.drawBitmap(ship.currentImg, virtualXToRealX(ship.position.x), virtualYToRealY(ship.position.y))
             }
         }
     }
 
     private fun drawShips() {
         for (ship in ships){
-            if (ship.isHorizontal)
-                 graphics.drawBitmap(ship.horizontalImg,virtualXToRealX(ship.position.x.toFloat()), virtualYToRealY(ship.position.y.toFloat()))
-            else
-                graphics.drawBitmap(ship.verticalImg,virtualXToRealX(ship.position.x.toFloat()), virtualYToRealY(ship.position.y.toFloat()))
-            Log.d("DIEGODEBUG", ship.toString())
+            graphics.drawBitmap(ship.currentImg, virtualXToRealX(ship.position.x), virtualYToRealY(ship.position.y))
         }
     }
 
@@ -104,11 +129,19 @@ class SeaBattleGameController (private val width: Int, private val height: Int, 
         return x * cellSide + xOffset
     }
 
+    private fun realXToVirtualX(x: Float) : Float{
+        return (x - xOffset) / cellSide
+    }
+
     private fun virtualYToRealY(y: Float) : Float{
         return y * cellSide + yOffset
     }
 
-    private fun virtualToReal(y: Float) : Float{
-        return y * cellSide
+    private fun realYToVirtualY(y: Float) : Float{
+        return (y - yOffset) / cellSide
+    }
+
+    private fun virtualToReal(n: Float) : Float{
+        return n * cellSide
     }
 }
