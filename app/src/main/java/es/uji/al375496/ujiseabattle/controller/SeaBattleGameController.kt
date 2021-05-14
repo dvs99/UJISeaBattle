@@ -2,8 +2,11 @@ package es.uji.al375496.ujiseabattle.controller
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.media.AudioAttributes
+import android.media.SoundPool
 import android.util.Log
 import es.uji.al375496.ujiseabattle.Assets
+import es.uji.al375496.ujiseabattle.R
 import es.uji.al375496.ujiseabattle.model.SeaBattleModel
 import es.uji.al375496.ujiseabattle.model.SeaBattleState
 import es.uji.al375496.ujiseabattle.model.data.Board
@@ -15,7 +18,7 @@ import es.uji.vj1229.framework.IGameController
 import es.uji.vj1229.framework.TouchHandler
 import java.lang.Float.min
 
-class SeaBattleGameController (width: Int, height: Int, context: Context, private val useSound: Boolean, private val useSmartOpponent: Boolean) : IGameController {
+class SeaBattleGameController (width: Int, height: Int, context: Context, private val useSound: Boolean, private val useSmartOpponent: Boolean) : IGameController, SeaBattleModel.SoundPlayer {
 
     //TODO: set right colors
     private companion object Constants{
@@ -63,8 +66,17 @@ class SeaBattleGameController (width: Int, height: Int, context: Context, privat
     var showBattleButton = false
     var showAIBoard = false
 
+    private lateinit var soundPool: SoundPool
+    private var victorySoundId = 0
+    private var defeatSoundId = 0
+    private var splashSoundId = 0
+    private var explosionSoundId = 0
+    private var smokeSoundId = 0
+    private var bloopSoundId = 0
+
 
     init {
+        prepareSoundPool(context)
         Assets.createAndResizeAssets(context, cellSide.toInt())
         for(i : Int in 0 until SHIP4_AMOUNT)
             ships.add(Ship(Position(SHIP4_POSITION.x + ((SHIP4_LENGTH + SHIP_HORIZONTAL_SPACING) * i), SHIP4_POSITION.y), SHIP4_LENGTH, true))
@@ -75,7 +87,24 @@ class SeaBattleGameController (width: Int, height: Int, context: Context, privat
         for(i : Int in 0 until SHIP1_AMOUNT)
             ships.add(Ship(Position(SHIP1_POSITION.x + ((SHIP1_LENGTH + SHIP_HORIZONTAL_SPACING) * i), SHIP1_POSITION.y), SHIP1_LENGTH, true))
 
-        model = SeaBattleModel(this, boards[0], boards[1], ships)
+        model = SeaBattleModel(this, this, boards[0], boards[1], ships)
+    }
+
+    private fun prepareSoundPool(context: Context) {
+        val attributes = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_GAME)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+        soundPool = SoundPool.Builder()
+                .setMaxStreams(5)
+                .setAudioAttributes(attributes)
+                .build()
+        victorySoundId = soundPool.load(context, R.raw.victory, 1)
+        defeatSoundId = soundPool.load(context, R.raw.defeat, 1)
+        splashSoundId = soundPool.load(context, R.raw.watersplash, 1)
+        explosionSoundId = soundPool.load(context, R.raw.explosion, 1)
+        smokeSoundId = soundPool.load(context, R.raw.smoke, 1)
+        bloopSoundId = soundPool.load(context, R.raw.bloop, 1)
     }
 
     override fun onUpdate(deltaTime: Float, touchEvents: MutableList<TouchHandler.TouchEvent>) {
@@ -205,5 +234,29 @@ class SeaBattleGameController (width: Int, height: Int, context: Context, privat
 
     private fun virtualToReal(n: Float) : Float{
         return n * cellSide
+    }
+
+    override fun playVictory() {
+        TODO("Not yet implemented")
+    }
+
+    override fun playDefeat() {
+        TODO("Not yet implemented")
+    }
+
+    override fun playSplash() {
+        soundPool.play(splashSoundId, 0.45f, 0.45f, 0, 0, 1f)
+    }
+
+    override fun playExplosion() {
+        soundPool.play(explosionSoundId, 0.6f, 0.6f, 2, 0, 1f)
+    }
+
+    override fun playSmoke() {
+        soundPool.play(smokeSoundId, 0.75f, 0.75f, 1, 0, 1f)
+    }
+
+    override fun playBloop() {
+        soundPool.play(bloopSoundId, 0.45f, 0.45f, 0, 0, 1f)
     }
 }

@@ -20,17 +20,14 @@ object Assets {
     private const val BUTTON_WIDTH = 4
 
     private const val SPLASH_COLUMNS = 6
-    private const val SPLASH_RESIZE = 1.65f
     private const val SPLASH_PIXELS_WIDE = 300
     private const val SPLASH_PIXELS_HIGH = 250
 
     private const val EXPLOSION_COLUMNS = 8
-    private const val EXPLOSION_RESIZE = 1.75f
     private const val EXPLOSION_PIXELS_WIDE = 96
     private const val EXPLOSION_PIXELS_HIGH = 96
 
     private const val SMOKE_COLUMNS = 6
-    private const val SMOKE_RESIZE = 1.7f
     private const val SMOKE_PIXELS_WIDE = 32
     private const val SMOKE_PIXELS_HIGH = 32
 
@@ -94,7 +91,7 @@ object Assets {
             splash = SpriteSheet(sheet, SPLASH_PIXELS_HIGH, SPLASH_PIXELS_WIDE)
             val frames = ArrayList<Bitmap>()
             splashAnim?.recycle()
-            frames.addAll(splash!!.getScaledRow(0, SPLASH_COLUMNS, (round(cellSize*SPLASH_RESIZE)).toInt(), (round(cellSize*SPLASH_RESIZE)).toInt()))
+            frames.addAll(splash!!.getScaledRow(0, SPLASH_COLUMNS, cellSize, cellSize))
             splashAnim = AnimatedBitmap(0.6f, false, *frames.toTypedArray())
         }
 
@@ -103,7 +100,7 @@ object Assets {
             explosion = SpriteSheet(sheet, EXPLOSION_PIXELS_HIGH, EXPLOSION_PIXELS_WIDE)
             val frames = ArrayList<Bitmap>()
             explosionAnim?.recycle()
-            frames.addAll(explosion!!.getScaledRow(0, EXPLOSION_COLUMNS, (round(cellSize*EXPLOSION_RESIZE)).toInt(), (round(cellSize*EXPLOSION_RESIZE)).toInt()))
+            frames.addAll(explosion!!.getScaledRow(0, EXPLOSION_COLUMNS, cellSize, cellSize))
             explosionAnim = AnimatedBitmap(0.8f, false, *frames.toTypedArray())
         }
 
@@ -112,7 +109,7 @@ object Assets {
             smoke = SpriteSheet(sheet, SMOKE_PIXELS_HIGH, SMOKE_PIXELS_WIDE)
             val frames = ArrayList<Bitmap>()
             smokeAnim?.recycle()
-            frames.addAll(smoke!!.getScaledRow(0, SMOKE_COLUMNS, (round(cellSize*SMOKE_RESIZE)).toInt(), (round(cellSize*SMOKE_RESIZE)).toInt()))
+            frames.addAll(smoke!!.getScaledRow(0, SMOKE_COLUMNS, cellSize, cellSize))
             smokeAnim = AnimatedBitmap(0.6f, false, *frames.toTypedArray())
         }
 

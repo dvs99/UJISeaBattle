@@ -9,7 +9,17 @@ import es.uji.al375496.ujiseabattle.model.data.Ship
 import kotlin.math.abs
 import kotlin.random.Random
 
-class SeaBattleModel(private val controller: SeaBattleGameController, private val playerBoard: Board, private val AIBoard: Board, private val unplacedShips: MutableList<Ship>) {
+class SeaBattleModel(private val controller: SeaBattleGameController, private val soundPlayer: SoundPlayer, private val playerBoard: Board, private val AIBoard: Board, private val unplacedShips: MutableList<Ship>) {
+
+    interface SoundPlayer {
+        fun playVictory()
+        fun playDefeat()
+        fun playSplash()
+        fun playExplosion()
+        fun playSmoke()
+        fun playBloop()
+    }
+
     private companion object Constants{
         const val MIN_DRAG = 0.2f
     }
@@ -91,8 +101,10 @@ class SeaBattleModel(private val controller: SeaBattleGameController, private va
                 val cellPosition = playerBoard.getRoundedCellPosition(unplacedShips[shipIndex].position)
                 if (cellPosition != null && playerBoard.getShipAt(cellPosition) == null) {
                     unplacedShips[shipIndex].position = cellPosition
-                    if (playerBoard.addShip(unplacedShips[shipIndex], cellPosition))
+                    if (playerBoard.addShip(unplacedShips[shipIndex], cellPosition)){
                         unplacedShips.removeAt(shipIndex)
+                        soundPlayer.playBloop()
+                    }
                     else //reset ship if it couldn't be placed
                         unplacedShips[shipIndex].position = shipStartingPos
                 }
@@ -119,6 +131,8 @@ class SeaBattleModel(private val controller: SeaBattleGameController, private va
                         //reset ship if it couldn't be placed
                         ship.position = shipStartingPos
                     }
+                    else
+                        soundPlayer.playBloop()
                 }
             }
             state = SeaBattleState.PLACE_SHIPS
@@ -132,8 +146,10 @@ class SeaBattleModel(private val controller: SeaBattleGameController, private va
     }
 
     fun tap(pos: Position) {
-        if(state == SeaBattleState.PLACE_SHIPS)
-            playerBoard.rotateShipAt(pos)
+        if(state == SeaBattleState.PLACE_SHIPS){
+            if (playerBoard.rotateShipAt(pos))
+                soundPlayer.playBloop()
+        }
         else if (state == SeaBattleState.PLAYER_TURN){
             val hitShip = AIBoard.tryHitAt(pos)
             if (hitShip != null){
@@ -141,6 +157,7 @@ class SeaBattleModel(private val controller: SeaBattleGameController, private va
                     //hit water
                     stateAfterAnimationEnds = SeaBattleState.PLAYER_TURN //todo change to computer turn
                     state = SeaBattleState.WAITING
+                    soundPlayer.playSplash()
                     Assets.splashAnim?.restart()
                     val animPos = AIBoard.getCellPosition(pos)
                     if (animPos!= null){
@@ -154,6 +171,7 @@ class SeaBattleModel(private val controller: SeaBattleGameController, private va
                             //ship sunk
                             stateAfterAnimationEnds = SeaBattleState.PLAYER_TURN
                             state = SeaBattleState.WAITING
+                            soundPlayer.playExplosion()
                             Assets.explosionAnim?.restart()
                             val animPos = AIBoard.getCellPosition(ship.position)
                             if (animPos!= null){
@@ -170,6 +188,7 @@ class SeaBattleModel(private val controller: SeaBattleGameController, private va
                             //ship hit
                             stateAfterAnimationEnds = SeaBattleState.PLAYER_TURN
                             state = SeaBattleState.WAITING
+                            soundPlayer.playSmoke()
                             Assets.smokeAnim?.restart()
                             val animPos = AIBoard.getCellPosition(pos)
                             if (animPos!= null){
