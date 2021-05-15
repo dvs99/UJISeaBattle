@@ -6,10 +6,11 @@ import es.uji.al375496.ujiseabattle.controller.SeaBattleGameController
 import es.uji.al375496.ujiseabattle.model.data.Board
 import es.uji.al375496.ujiseabattle.model.data.Position
 import es.uji.al375496.ujiseabattle.model.data.Ship
+import es.uji.al375496.ujiseabattle.model.strategy.IStrategy
 import kotlin.math.abs
 import kotlin.random.Random
 
-class SeaBattleModel(private val controller: SeaBattleGameController, private val soundPlayer: SoundPlayer, private val playerBoard: Board, private val AIBoard: Board, private val unplacedShips: MutableList<Ship>) {
+class SeaBattleModel(private val controller: SeaBattleGameController, private val soundPlayer: SoundPlayer, private val playerBoard: Board, private val AIBoard: Board, private val unplacedShips: MutableList<Ship>, private val strategy: IStrategy) {
 
     interface SoundPlayer {
         fun playVictory()
@@ -155,7 +156,7 @@ class SeaBattleModel(private val controller: SeaBattleGameController, private va
             if (hitShip != null){
                 if (!hitShip) {
                     //hit water
-                    stateAfterAnimationEnds = SeaBattleState.PLAYER_TURN //todo change to computer turn
+                    stateAfterAnimationEnds = SeaBattleState.COMPUTER_TURN
                     state = SeaBattleState.WAITING
                     soundPlayer.playSplash()
                     Assets.splashAnim?.restart()
@@ -228,6 +229,68 @@ class SeaBattleModel(private val controller: SeaBattleGameController, private va
         state = stateAfterAnimationEnds
         controller.animation = null
         controller.animationPos.clear()
+        if(state == SeaBattleState.COMPUTER_TURN)
+            playAITurn()
+    }
+
+    private fun playAITurn() {
+        if(state == SeaBattleState.COMPUTER_TURN) {
+            var hitShip: Boolean?
+            var pos: Position
+            do{
+                pos = strategy.getAIGuess()
+                hitShip = playerBoard.tryHitAt(pos)
+            } while (hitShip==null)
+
+            if (!hitShip) {
+                //hit water
+                strategy.shotResults(false, null)
+                stateAfterAnimationEnds = SeaBattleState.PLAYER_TURN
+                state = SeaBattleState.WAITING
+                soundPlayer.playSplash()
+                Assets.splashAnim?.restart()
+                val animPos = playerBoard.getCellPosition(pos)
+                if (animPos!= null){
+                    controller.animationPos.add(animPos)
+                    controller.animation = Assets.splashAnim
+                }
+            } else {
+                val ship = playerBoard.getShipAt(pos)
+                if (ship != null){
+                    if (ship.sunk) {
+                        //ship sunk
+                        strategy.shotResults(true, playerBoard.getShipAt(pos))
+                        stateAfterAnimationEnds = SeaBattleState.COMPUTER_TURN
+                        state = SeaBattleState.WAITING
+                        soundPlayer.playExplosion()
+                        Assets.explosionAnim?.restart()
+                        val animPos = playerBoard.getCellPosition(ship.position)
+                        if (animPos!= null){
+                            for (i in 0 until ship.length){
+                                if (ship.isHorizontal())
+                                    controller.animationPos.add(Position(animPos.x+i, animPos.y))
+                                else
+                                    controller.animationPos.add(Position(animPos.x, animPos.y+i))
+                            }
+                            controller.animation = Assets.explosionAnim
+
+                        }
+                    } else {
+                        //ship hit
+                        strategy.shotResults(true, null)
+                        stateAfterAnimationEnds = SeaBattleState.COMPUTER_TURN
+                        state = SeaBattleState.WAITING
+                        soundPlayer.playSmoke()
+                        Assets.smokeAnim?.restart()
+                        val animPos = playerBoard.getCellPosition(pos)
+                        if (animPos!= null){
+                            controller.animationPos.add(animPos)
+                            controller.animation = Assets.smokeAnim
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

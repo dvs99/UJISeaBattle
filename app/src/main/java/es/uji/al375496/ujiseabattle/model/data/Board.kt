@@ -16,7 +16,7 @@ data class Board (var position: Position, val width: Int, val height: Int){
             null
     }
 
-    private fun getCellIndexesAtPosition(pos: Position) : Position?{
+    fun getCellIndexesAtPosition(pos: Position) : Position?{
         val cellPos = getCellPosition(pos)
         if (cellPos != null)
             return Position(cellPos.x - position.x, cellPos.y - position.y)

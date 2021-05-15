@@ -12,6 +12,8 @@ import es.uji.al375496.ujiseabattle.model.SeaBattleState
 import es.uji.al375496.ujiseabattle.model.data.Board
 import es.uji.al375496.ujiseabattle.model.data.Position
 import es.uji.al375496.ujiseabattle.model.data.Ship
+import es.uji.al375496.ujiseabattle.model.strategy.RandomStrategy
+import es.uji.al375496.ujiseabattle.model.strategy.SmartStrategy
 import es.uji.vj1229.framework.AnimatedBitmap
 import es.uji.vj1229.framework.Graphics
 import es.uji.vj1229.framework.IGameController
@@ -87,7 +89,17 @@ class SeaBattleGameController (width: Int, height: Int, context: Context, privat
         for(i : Int in 0 until SHIP1_AMOUNT)
             ships.add(Ship(Position(SHIP1_POSITION.x + ((SHIP1_LENGTH + SHIP_HORIZONTAL_SPACING) * i), SHIP1_POSITION.y), SHIP1_LENGTH, true))
 
-        model = SeaBattleModel(this, this, boards[0], boards[1], ships)
+        val possibleShips = mutableListOf<Ship>()
+        for(i : Int in 0 until SHIP4_AMOUNT)
+            possibleShips.add(Ship(Position(SHIP4_POSITION.x + ((SHIP4_LENGTH + SHIP_HORIZONTAL_SPACING) * i), SHIP4_POSITION.y), SHIP4_LENGTH, true))
+        for(i : Int in 0 until SHIP3_AMOUNT)
+            possibleShips.add(Ship(Position(SHIP3_POSITION.x + ((SHIP3_LENGTH + SHIP_HORIZONTAL_SPACING) * i), SHIP3_POSITION.y), SHIP3_LENGTH, true))
+        for(i : Int in 0 until SHIP2_AMOUNT)
+            possibleShips.add(Ship(Position(SHIP2_POSITION.x + ((SHIP2_LENGTH + SHIP_HORIZONTAL_SPACING) * i), SHIP2_POSITION.y), SHIP2_LENGTH, true))
+        for(i : Int in 0 until SHIP1_AMOUNT)
+            possibleShips.add(Ship(Position(SHIP1_POSITION.x + ((SHIP1_LENGTH + SHIP_HORIZONTAL_SPACING) * i), SHIP1_POSITION.y), SHIP1_LENGTH, true))
+
+        model = SeaBattleModel(this, this, boards[0], boards[1], ships, SmartStrategy(boards[0], possibleShips))
     }
 
     private fun prepareSoundPool(context: Context) {
@@ -111,7 +123,6 @@ class SeaBattleGameController (width: Int, height: Int, context: Context, privat
         if (model.state == SeaBattleState.WAITING){
             if(animation != null){
                 animation!!.update(deltaTime)
-                Log.d("DIEGODEBUG", "animation playing ${animation!!.currentFrame}")
                 if (animation!!.isEnded)
                     model.onAnimationEnd()
             }
@@ -191,7 +202,8 @@ class SeaBattleGameController (width: Int, height: Int, context: Context, privat
                     if (board.position != AI_BOARD_POSITION || ship.sunk){
                         graphics.drawBitmap(ship.currentImg, virtualXToRealX(ship.position.x), virtualYToRealY(ship.position.y))
                     }
-                    if (board.position == AI_BOARD_POSITION && !ship.sunk){
+                    //ship hits
+                    if (!ship.sunk){
                         for (hit in ship.hits){
                         drawLine(virtualXToRealX(hit.x + CROSS_PADDING), virtualYToRealY(hit.y + CROSS_PADDING), virtualXToRealX(hit.x+ 1f - CROSS_PADDING), virtualYToRealY(hit.y + 1f - CROSS_PADDING), virtualToReal(BOARD_LINE_WIDTH), HIT_COLOR)
                         drawLine(virtualXToRealX(hit.x + 1f - CROSS_PADDING), virtualYToRealY(hit.y + CROSS_PADDING), virtualXToRealX(hit.x + CROSS_PADDING), virtualYToRealY(hit.y + 1f - CROSS_PADDING), virtualToReal(BOARD_LINE_WIDTH), HIT_COLOR)
