@@ -57,8 +57,6 @@ class SmartStrategy(override val playerBoard: Board, private val possibleShips: 
                 else if ((probabilityMatrix[x][y] == bestProbability))
                     bestPos.add(Position(x + playerBoard.position.x, y + playerBoard.position.y))
 
-        Log.d("DIEGODEBUG", "probability @$bestPos =$bestProbability")
-
         val selectedPos = bestPos[(0 until bestPos.size).random()]
         lastPosX = selectedPos.x.toInt()
         lastPosY = selectedPos.y.toInt()

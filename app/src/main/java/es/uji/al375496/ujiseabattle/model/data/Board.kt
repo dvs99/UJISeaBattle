@@ -39,10 +39,8 @@ data class Board (var position: Position, val width: Int, val height: Int){
 
             //check that the cells are available
             for (i: Int in 0 until ship.length)
-                if (ship.isHorizontal() && (x+i >= cells.size || cells[x+i][y].ship != null) || !ship.isHorizontal() && (y+i >= cells[0].size || cells[x][y+i].ship != null)){
-                    Log.d("DIEGODEBUG", "failed-> x: $x, y:$y, hor: ${ship.isHorizontal()}, len:${ship.length}")
+                if (ship.isHorizontal() && (x+i >= cells.size || cells[x+i][y].ship != null) || !ship.isHorizontal() && (y+i >= cells[0].size || cells[x][y+i].ship != null))
                     return false
-                }
 
             //place the ship
             ships.add(ship)
@@ -54,7 +52,6 @@ data class Board (var position: Position, val width: Int, val height: Int){
                         cells[x+i][y].ship = ship
                     else
                         cells[x][y+i].ship = ship
-                Log.d("DIEGODEBUG", "placed-> x: $x, y:$y, hor: ${ship.isHorizontal()}, len:${ship.length}")
                 return true
             }
         }

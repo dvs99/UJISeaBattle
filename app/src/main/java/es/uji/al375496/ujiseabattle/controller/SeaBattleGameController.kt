@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.media.AudioAttributes
 import android.media.SoundPool
-import android.util.Log
 import es.uji.al375496.ujiseabattle.Assets
 import es.uji.al375496.ujiseabattle.R
 import es.uji.al375496.ujiseabattle.model.SeaBattleModel
@@ -12,7 +11,7 @@ import es.uji.al375496.ujiseabattle.model.SeaBattleState
 import es.uji.al375496.ujiseabattle.model.data.Board
 import es.uji.al375496.ujiseabattle.model.data.Position
 import es.uji.al375496.ujiseabattle.model.data.Ship
-import es.uji.al375496.ujiseabattle.model.strategy.RandomStrategy
+import es.uji.al375496.ujiseabattle.model.strategy.SimpleStrategy
 import es.uji.al375496.ujiseabattle.model.strategy.SmartStrategy
 import es.uji.vj1229.framework.AnimatedBitmap
 import es.uji.vj1229.framework.Graphics
@@ -20,7 +19,7 @@ import es.uji.vj1229.framework.IGameController
 import es.uji.vj1229.framework.TouchHandler
 import java.lang.Float.min
 
-class SeaBattleGameController (width: Int, height: Int, context: Context, private val useSound: Boolean, private val useSmartOpponent: Boolean) : IGameController, SeaBattleModel.SoundPlayer {
+class SeaBattleGameController (width: Int, height: Int, context: Context, private val useSound: Boolean, useSmartOpponent: Boolean) : IGameController, SeaBattleModel.SoundPlayer {
 
     //TODO: set right colors
     private companion object Constants{
@@ -78,7 +77,9 @@ class SeaBattleGameController (width: Int, height: Int, context: Context, privat
 
 
     init {
-        prepareSoundPool(context)
+        if (useSound)
+            prepareSoundPool(context)
+
         Assets.createAndResizeAssets(context, cellSide.toInt())
         for(i : Int in 0 until SHIP4_AMOUNT)
             ships.add(Ship(Position(SHIP4_POSITION.x + ((SHIP4_LENGTH + SHIP_HORIZONTAL_SPACING) * i), SHIP4_POSITION.y), SHIP4_LENGTH, true))
@@ -89,17 +90,21 @@ class SeaBattleGameController (width: Int, height: Int, context: Context, privat
         for(i : Int in 0 until SHIP1_AMOUNT)
             ships.add(Ship(Position(SHIP1_POSITION.x + ((SHIP1_LENGTH + SHIP_HORIZONTAL_SPACING) * i), SHIP1_POSITION.y), SHIP1_LENGTH, true))
 
-        val possibleShips = mutableListOf<Ship>()
-        for(i : Int in 0 until SHIP4_AMOUNT)
-            possibleShips.add(Ship(Position(SHIP4_POSITION.x + ((SHIP4_LENGTH + SHIP_HORIZONTAL_SPACING) * i), SHIP4_POSITION.y), SHIP4_LENGTH, true))
-        for(i : Int in 0 until SHIP3_AMOUNT)
-            possibleShips.add(Ship(Position(SHIP3_POSITION.x + ((SHIP3_LENGTH + SHIP_HORIZONTAL_SPACING) * i), SHIP3_POSITION.y), SHIP3_LENGTH, true))
-        for(i : Int in 0 until SHIP2_AMOUNT)
-            possibleShips.add(Ship(Position(SHIP2_POSITION.x + ((SHIP2_LENGTH + SHIP_HORIZONTAL_SPACING) * i), SHIP2_POSITION.y), SHIP2_LENGTH, true))
-        for(i : Int in 0 until SHIP1_AMOUNT)
-            possibleShips.add(Ship(Position(SHIP1_POSITION.x + ((SHIP1_LENGTH + SHIP_HORIZONTAL_SPACING) * i), SHIP1_POSITION.y), SHIP1_LENGTH, true))
+        model = if (useSmartOpponent) {
+            val possibleShips = mutableListOf<Ship>()
+            for (i: Int in 0 until SHIP4_AMOUNT)
+                possibleShips.add(Ship(Position(SHIP4_POSITION.x + ((SHIP4_LENGTH + SHIP_HORIZONTAL_SPACING) * i), SHIP4_POSITION.y), SHIP4_LENGTH, true))
+            for (i: Int in 0 until SHIP3_AMOUNT)
+                possibleShips.add(Ship(Position(SHIP3_POSITION.x + ((SHIP3_LENGTH + SHIP_HORIZONTAL_SPACING) * i), SHIP3_POSITION.y), SHIP3_LENGTH, true))
+            for (i: Int in 0 until SHIP2_AMOUNT)
+                possibleShips.add(Ship(Position(SHIP2_POSITION.x + ((SHIP2_LENGTH + SHIP_HORIZONTAL_SPACING) * i), SHIP2_POSITION.y), SHIP2_LENGTH, true))
+            for (i: Int in 0 until SHIP1_AMOUNT)
+                possibleShips.add(Ship(Position(SHIP1_POSITION.x + ((SHIP1_LENGTH + SHIP_HORIZONTAL_SPACING) * i), SHIP1_POSITION.y), SHIP1_LENGTH, true))
 
-        model = SeaBattleModel(this, this, boards[0], boards[1], ships, SmartStrategy(boards[0], possibleShips))
+            SeaBattleModel(this, this, boards[0], boards[1], ships, SmartStrategy(boards[0], possibleShips))
+        }
+        else
+            SeaBattleModel(this, this, boards[0], boards[1], ships, SimpleStrategy(boards[0]))
     }
 
     private fun prepareSoundPool(context: Context) {
@@ -249,26 +254,32 @@ class SeaBattleGameController (width: Int, height: Int, context: Context, privat
     }
 
     override fun playVictory() {
-        TODO("Not yet implemented")
+        if (useSound)
+            TODO("Not yet implemented")
     }
 
     override fun playDefeat() {
-        TODO("Not yet implemented")
+        if (useSound)
+            TODO("Not yet implemented")
     }
 
     override fun playSplash() {
-        soundPool.play(splashSoundId, 0.45f, 0.45f, 0, 0, 1f)
+        if (useSound)
+            soundPool.play(splashSoundId, 0.45f, 0.45f, 0, 0, 1f)
     }
 
     override fun playExplosion() {
-        soundPool.play(explosionSoundId, 0.6f, 0.6f, 2, 0, 1f)
+        if (useSound)
+            soundPool.play(explosionSoundId, 0.6f, 0.6f, 2, 0, 1f)
     }
 
     override fun playSmoke() {
-        soundPool.play(smokeSoundId, 0.75f, 0.75f, 1, 0, 1f)
+        if (useSound)
+            soundPool.play(smokeSoundId, 0.75f, 0.75f, 1, 0, 1f)
     }
 
     override fun playBloop() {
-        soundPool.play(bloopSoundId, 0.45f, 0.45f, 0, 0, 1f)
+        if (useSound)
+            soundPool.play(bloopSoundId, 0.45f, 0.45f, 0, 0, 1f)
     }
 }

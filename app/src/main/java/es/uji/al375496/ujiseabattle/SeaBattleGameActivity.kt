@@ -15,9 +15,8 @@ class SeaBattleGameActivity : GameActivity(ActivityInfo.SCREEN_ORIENTATION_LANDS
         val displayMetrics = DisplayMetrics()
         @Suppress("DEPRECATION")
         windowManager.defaultDisplay.getMetrics(displayMetrics)
-        //TODO: are the bools being set before this is called?
-        sound = intent.getBooleanExtra(SOUND, false)
-        sound = intent.getBooleanExtra(SOUND, false)
+        sound = intent.getBooleanExtra(SOUND, true)
+        smart = intent.getBooleanExtra(SMART, true)
         controller = SeaBattleGameController(
             displayMetrics.widthPixels,
             displayMetrics.heightPixels,
