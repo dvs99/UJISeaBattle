@@ -7,5 +7,6 @@ enum class SeaBattleState {
     PLAYER_TURN,
     COMPUTER_TURN,
     WAITING,
-    END
+    WON,
+    LOST
 }

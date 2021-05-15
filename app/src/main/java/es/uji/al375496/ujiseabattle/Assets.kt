@@ -4,11 +4,8 @@ import android.content.Context
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.util.Log
-import es.uji.al375496.ujiseabattle.Assets.splash
 import es.uji.vj1229.framework.AnimatedBitmap
 import es.uji.vj1229.framework.SpriteSheet
-import kotlin.math.round
 
 object Assets {
     private const val SHIP1_LENGTH = 1
@@ -16,8 +13,14 @@ object Assets {
     private const val SHIP3_LENGTH = 3
     private const val SHIP4_LENGTH = 4
 
+    private const val TEXT_HEIGHT = 1.5f
+    private const val TEXT_WIDTH = 8
+
     private const val BUTTON_HEIGHT = 4
     private const val BUTTON_WIDTH = 4
+
+    private const val RESTART_HEIGHT = 1.5f
+    private const val RESTART_WIDTH = 3
 
     private const val SPLASH_COLUMNS = 6
     private const val SPLASH_PIXELS_WIDE = 300
@@ -67,7 +70,20 @@ object Assets {
     var verticalShip4Sunk : Bitmap? = null
         private set
 
+    var aiTurnText : Bitmap? = null
+        private set
+    var playerTurnText : Bitmap? = null
+        private set
+    var dragText : Bitmap? = null
+        private set
+    var loseText : Bitmap? = null
+        private set
+    var winText : Bitmap? = null
+        private set
+
     var battleButton : Bitmap? = null
+        private set
+    var restartButton: Bitmap? = null
         private set
 
     private var splash : SpriteSheet? = null
@@ -181,9 +197,36 @@ object Assets {
                 BitmapFactory.decodeResource(resources, R.drawable.ship4vs),
                 cellSize, cellSize * SHIP4_LENGTH, true)
 
+        aiTurnText?.recycle()
+        aiTurnText = Bitmap.createScaledBitmap(
+                BitmapFactory.decodeResource(resources, R.drawable.ai_turn),
+                cellSize * TEXT_WIDTH, (cellSize * TEXT_HEIGHT).toInt(), true)
+        playerTurnText?.recycle()
+        playerTurnText = Bitmap.createScaledBitmap(
+                BitmapFactory.decodeResource(resources, R.drawable.player_turn),
+                cellSize * TEXT_WIDTH, (cellSize * TEXT_HEIGHT).toInt(), true)
+        dragText?.recycle()
+        dragText = Bitmap.createScaledBitmap(
+                BitmapFactory.decodeResource(resources, R.drawable.drag),
+                cellSize * TEXT_WIDTH, (cellSize * TEXT_HEIGHT).toInt(), true)
+        loseText?.recycle()
+        loseText = Bitmap.createScaledBitmap(
+                BitmapFactory.decodeResource(resources, R.drawable.lose),
+                cellSize * TEXT_WIDTH, (cellSize * TEXT_HEIGHT).toInt(), true)
+        winText?.recycle()
+        winText = Bitmap.createScaledBitmap(
+                BitmapFactory.decodeResource(resources, R.drawable.win),
+                cellSize * TEXT_WIDTH, (cellSize * TEXT_HEIGHT).toInt(), true)
+
+
         battleButton?.recycle()
         battleButton = Bitmap.createScaledBitmap(
                 BitmapFactory.decodeResource(resources, R.drawable.battle),
                 cellSize * BUTTON_WIDTH, cellSize * BUTTON_HEIGHT, true)
+
+        restartButton?.recycle()
+        restartButton = Bitmap.createScaledBitmap(
+                BitmapFactory.decodeResource(resources, R.drawable.restart),
+                cellSize * RESTART_WIDTH, (cellSize * RESTART_HEIGHT).toInt(), true)
     }
 }

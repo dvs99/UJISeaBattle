@@ -58,6 +58,23 @@ data class Board (var position: Position, val width: Int, val height: Int){
         return false
     }
 
+    fun canAddShip(ship: Ship, pos: Position): Boolean{
+        val cellIndexes = getCellIndexesAtPosition(pos)
+        if (cellIndexes != null){
+            val x = cellIndexes.x.toInt()
+            val y = cellIndexes.y.toInt()
+
+            //check that the cells are available
+            for (i: Int in 0 until ship.length)
+                if (ship.isHorizontal() && (x+i >= cells.size || cells[x+i][y].ship != null) || !ship.isHorizontal() && (y+i >= cells[0].size || cells[x][y+i].ship != null))
+                    return false
+
+            //can place the ship
+            return true
+        }
+        return false
+    }
+
     fun getShipAt(pos: Position): Ship? {
         val cellIndexes= getCellIndexesAtPosition(pos)
 

@@ -21,13 +21,15 @@ class SimpleStrategy(override val playerBoard: Board) : IStrategy {
             for (y in cells[0].indices)
                 if (cells[x][y] == CellState.HIT){
                     hitShip = true
-                     when (CellState.UNKNOWN) {
-                        cells[x][y+1] -> bestPos = Position(x + playerBoard.position.x, y+1f + playerBoard.position.y)
-                        cells[x][y-1] -> bestPos = Position(x + playerBoard.position.x, y-1f + playerBoard.position.y)
-                        cells[x+1][y] -> bestPos = Position(x+1f + playerBoard.position.x, y + playerBoard.position.y)
-                        cells[x-1][y] -> bestPos = Position(x-1f + playerBoard.position.x, y + playerBoard.position.y)
+                    if (y < cells[0].size - 1 && CellState.UNKNOWN == cells[x][y+1])
+                        bestPos = Position(x + playerBoard.position.x, y+1f + playerBoard.position.y)
+                    else if (y > 0 && CellState.UNKNOWN == cells[x][y-1])
+                        bestPos = Position(x + playerBoard.position.x, y-1f + playerBoard.position.y)
+                    else if (x < cells.size -1 && CellState.UNKNOWN == cells[x+1][y])
+                        bestPos = Position(x+1f + playerBoard.position.x, y + playerBoard.position.y)
+                    else if (x > 0 && CellState.UNKNOWN == cells[x-1][y])
+                        bestPos = Position(x-1f + playerBoard.position.x, y + playerBoard.position.y)
                     }
-                }
 
         if (!hitShip)
             bestPos = Position((playerBoard.position.x.toInt() until playerBoard.position.x.toInt() + playerBoard.width).random().toFloat(), (playerBoard.position.y.toInt() until playerBoard.position.y.toInt() + playerBoard.height).random().toFloat())
