@@ -32,13 +32,13 @@ class SeaBattleModel(private val controller: SeaBattleGameController, private va
     private var shipIndex = 0
     private var dragIsTap = true
 
-    private var AIShips = mutableListOf<Ship>()
+    private var aiShips = mutableListOf<Ship>()
 
     private var stateAfterAnimationEnds = SeaBattleState.PLACE_SHIPS
 
     init {
         for (ship in unplacedShips)
-            AIShips.add(Ship(Position(0f,0f), ship.length, ship.isHorizontal()))
+            aiShips.add(Ship(Position(0f,0f), ship.length, ship.isHorizontal()))
         controller.currentText = Assets.dragText
     }
 
@@ -89,8 +89,7 @@ class SeaBattleModel(private val controller: SeaBattleGameController, private va
             else
                 controller.highlightedRectPos = null
 
-
-            //if drag is minimal consider it a tap
+            //if drag doesn't go above a minimum value at any moment consider it is considered as a tap, this checks if it has gone above it
             if (dragIsTap && abs(unplacedShips[shipIndex].position.x - shipStartingPos.x) > MIN_DRAG || abs(unplacedShips[shipIndex].position.y - shipStartingPos.y) > MIN_DRAG)
                 dragIsTap = false
         }
@@ -121,7 +120,7 @@ class SeaBattleModel(private val controller: SeaBattleGameController, private va
                 else
                     controller.highlightedRectPos = null
 
-                //if drag is minimal consider it a tap
+                //if drag doesn't go above a minimum value at any moment consider it is considered as a tap, this checks if it has gone above it
                 if (dragIsTap && abs(ship.position.x - shipStartingPos.x) > MIN_DRAG || abs(ship.position.y - shipStartingPos.y) > MIN_DRAG)
                     dragIsTap = false
             }
@@ -141,7 +140,7 @@ class SeaBattleModel(private val controller: SeaBattleGameController, private va
             }
             else {
                 controller.highlightedRectPos=null
-                //try to place ship in the board
+                //try to place ship into the board by rounding its position
                 val cellPosition = playerBoard.getRoundedCellPosition(unplacedShips[shipIndex].position)
                 if (cellPosition != null && playerBoard.getShipAt(cellPosition) == null) {
                     unplacedShips[shipIndex].position = cellPosition
@@ -170,6 +169,7 @@ class SeaBattleModel(private val controller: SeaBattleGameController, private va
                     tap(shipStartingPos)
                 }
                 else {
+                    //try to move ship in the board
                     controller.highlightedRectPos=null
                     val cellPosition = playerBoard.getRoundedCellPosition(ship.position)
                     if (cellPosition == null || !playerBoard.moveShip(shipStartingPos, cellPosition)) {
@@ -192,10 +192,12 @@ class SeaBattleModel(private val controller: SeaBattleGameController, private va
 
     fun tap(pos: Position) {
         if(state == SeaBattleState.PLACE_SHIPS){
+            //rotate the ship if tap is on a ship
             if (playerBoard.rotateShipAt(pos))
                 soundPlayer.playBloop()
         }
         else if (state == SeaBattleState.PLAYER_TURN){
+            //shoot if tap is on a board cell
             val hitShip = AIBoard.tryHitAt(pos)
             if (hitShip != null){
                 if (!hitShip) {
@@ -245,7 +247,7 @@ class SeaBattleModel(private val controller: SeaBattleGameController, private va
                 }
             }
 
-            //check win
+            //check win of player
             var win = true
             for (ship in AIBoard.ships)
                 if (!ship.sunk)
@@ -263,6 +265,7 @@ class SeaBattleModel(private val controller: SeaBattleGameController, private va
     }
 
     fun startBattle() {
+        controller.currentText = Assets.playerTurnText
         soundPlayer.playBattle()
         state = SeaBattleState.WAITING
         controller.showBattleButton = false
@@ -272,7 +275,7 @@ class SeaBattleModel(private val controller: SeaBattleGameController, private va
     }
 
     private fun placeAIShips() {
-        for (ship in AIShips){
+        for (ship in aiShips){
             val xRange = AIBoard.position.x.toInt() until(AIBoard.position.x.toInt() + AIBoard.width)
             val yRange = AIBoard.position.y.toInt() until(AIBoard.position.y.toInt() + AIBoard.height)
             do{
@@ -298,6 +301,7 @@ class SeaBattleModel(private val controller: SeaBattleGameController, private va
     private fun playAITurn() {
         controller.currentText = Assets.aiTurnText
         if(state == SeaBattleState.COMPUTER_TURN) {
+            //ask the AI for a shoot making sure it gives a valid one
             var hitShip: Boolean?
             var pos: Position
             do{
@@ -354,7 +358,7 @@ class SeaBattleModel(private val controller: SeaBattleGameController, private va
                 }
             }
 
-            //check win
+            //check win of AI
             var win = true
             for (ship in playerBoard.ships)
                 if (!ship.sunk)

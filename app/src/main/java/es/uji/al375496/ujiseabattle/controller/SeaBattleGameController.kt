@@ -135,9 +135,9 @@ class SeaBattleGameController (width: Int, height: Int, context: Context, privat
         bloopSoundId = soundPool.load(context, R.raw.bloop, 1)
     }
 
-
     override fun onUpdate(deltaTime: Float, touchEvents: MutableList<TouchHandler.TouchEvent>) {
         if (model.state == SeaBattleState.WAITING){
+            //play animations
             if(animation != null){
                 animation!!.update(deltaTime)
                 if (animation!!.isEnded)
@@ -146,10 +146,12 @@ class SeaBattleGameController (width: Int, height: Int, context: Context, privat
         }
         else{
             for (event in touchEvents){
+                //check for touch start
                 if (event.type == TouchHandler.TouchType.TOUCH_DOWN) {
                     if (model.state == SeaBattleState.PLACE_SHIPS)
                         model.touchOrigin = Position(realXToVirtualX(event.x.toFloat()), realYToVirtualY(event.y.toFloat()))
                 }
+                //drag update
                 else if (event.type == TouchHandler.TouchType.TOUCH_DRAGGED) {
                     if(model.state == SeaBattleState.DRAG_INSIDE_BOARD || model.state == SeaBattleState.DRAG_INTO_BOARD)
                         model.drag(Position(realXToVirtualX(event.x.toFloat()), realYToVirtualY(event.y.toFloat())))
@@ -159,6 +161,7 @@ class SeaBattleGameController (width: Int, height: Int, context: Context, privat
                     }
                 }
                 else if (event.type == TouchHandler.TouchType.TOUCH_UP){
+                    //check for end of drag
                     if(model.state == SeaBattleState.DRAG_INSIDE_BOARD || model.state == SeaBattleState.DRAG_INTO_BOARD)
                         model.endDrag(Position(realXToVirtualX(event.x.toFloat()), realYToVirtualY(event.y.toFloat())))
 
@@ -169,15 +172,17 @@ class SeaBattleGameController (width: Int, height: Int, context: Context, privat
                                         && realXToVirtualX(event.x.toFloat()) < BUTTON_POS.x + realToVirtual(Assets.battleButton!!.width.toFloat()) && realYToVirtualY(event.y.toFloat()) > BUTTON_POS.y
                                         && realYToVirtualY(event.y.toFloat()) < BUTTON_POS.y + realToVirtual(Assets.battleButton!!.height.toFloat()))
                             model.startBattle()
-                        else
+                        else //check for tap when placing ships
                             model.tap(Position(realXToVirtualX(event.x.toFloat()), realYToVirtualY(event.y.toFloat())))
                     }
+
+                    //check for tap in turn
                     else if (model.state == SeaBattleState.PLAYER_TURN){
                         model.tap(Position(realXToVirtualX(event.x.toFloat()), realYToVirtualY(event.y.toFloat())))
                     }
-                    else if (model.state == SeaBattleState.LOST || model.state == SeaBattleState.WON)
 
-                    //check for restart button press
+                    //check for restart when game ended
+                    else if (model.state == SeaBattleState.LOST || model.state == SeaBattleState.WON)
                         if (Assets.restartButton != null && realXToVirtualX(event.x.toFloat()) > RESTART_POS.x && realXToVirtualX(event.x.toFloat()) < RESTART_POS.x + realToVirtual(Assets.restartButton!!.width.toFloat())
                                 && realYToVirtualY(event.y.toFloat()) > RESTART_POS.y && realYToVirtualY(event.y.toFloat()) < RESTART_POS.y + realToVirtual(Assets.restartButton!!.height.toFloat()))
                             restartHandler.restartApp()
@@ -220,6 +225,7 @@ class SeaBattleGameController (width: Int, height: Int, context: Context, privat
                     continue
                 //background
                 drawRect(virtualXToRealX(board.position.x), virtualYToRealY(board.position.y), virtualToReal(board.width.toFloat()), virtualToReal(board.height.toFloat()), BOARD_CELL_COLOR)
+
                 //lines
                 for (x in board.position.x.toInt()..(board.position.x.toInt() + board.width))
                     drawLine(virtualXToRealX(x.toFloat()), virtualYToRealY(board.position.y - halfLineWidth),virtualXToRealX(x.toFloat()), virtualYToRealY(board.position.y + board.height + halfLineWidth), virtualToReal(BOARD_LINE_WIDTH), BOARD_LINE_COLOR)
@@ -227,6 +233,7 @@ class SeaBattleGameController (width: Int, height: Int, context: Context, privat
                 for (y in board.position.y.toInt()..(board.position.y.toInt() + board.height))
                     drawLine(virtualXToRealX(board.position.x - halfLineWidth), virtualYToRealY(y.toFloat()),virtualXToRealX(board.position.x + board.width + halfLineWidth), virtualYToRealY(y.toFloat()), virtualToReal(BOARD_LINE_WIDTH), BOARD_LINE_COLOR)
 
+                //highlight
                 drawHighlightedSquare()
 
                 //cells

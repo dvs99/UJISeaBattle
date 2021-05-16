@@ -102,6 +102,7 @@ object Assets {
     fun createAndResizeAssets(context: Context, cellSize : Int) {
         val resources : Resources = context.resources
 
+        //animations
         if (splash == null) {
             val sheet = BitmapFactory.decodeResource(resources, R.drawable.splash)
             splash = SpriteSheet(sheet, SPLASH_PIXELS_HIGH, SPLASH_PIXELS_WIDE)
@@ -129,6 +130,7 @@ object Assets {
             smokeAnim = AnimatedBitmap(0.6f, false, *frames.toTypedArray())
         }
 
+        //not animated sprites
         horizontalShip1?.recycle()
         horizontalShip1 = Bitmap.createScaledBitmap(
             BitmapFactory.decodeResource(resources, R.drawable.ship1),

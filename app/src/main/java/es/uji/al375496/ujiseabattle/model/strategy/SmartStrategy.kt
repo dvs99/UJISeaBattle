@@ -1,25 +1,25 @@
 package es.uji.al375496.ujiseabattle.model.strategy
 
-import android.util.Log
 import es.uji.al375496.ujiseabattle.model.data.Board
 import es.uji.al375496.ujiseabattle.model.data.Position
 import es.uji.al375496.ujiseabattle.model.data.Ship
 
 class SmartStrategy(override val playerBoard: Board, private val possibleShips: MutableList<Ship>) : IStrategy {
     private enum class CellState{ UNKNOWN, HIT, SUNK, WATER}
-    private val cells = Array(playerBoard.width) { _ -> Array(playerBoard.height) { _ -> CellState.UNKNOWN }}
-    private var probabilityMatrix = Array(playerBoard.width) { _ -> Array(playerBoard.height) { _ -> 0 }}
+    private val cells = Array(playerBoard.width) { Array(playerBoard.height) { CellState.UNKNOWN }}
+    private var probabilityMatrix = Array(playerBoard.width) { Array(playerBoard.height) { 0 }}
 
-    var lastPosX = 0
-    var lastPosY = 0
+    private var lastPosX = 0
+    private var lastPosY = 0
 
+    //tries to find boats by exploring the possible locations of every ship and tries to take them down using the same strategy for the hit ships
     override fun getAIGuess(): Position {
         //reset probabilities
         for (line in probabilityMatrix)
             for (i in line.indices)
                 line[i] = 0
 
-        //attack or find
+        //decide whether to attack or find
         var attackMode = false
         for (line in cells)
             for (cellState in line)
@@ -46,7 +46,7 @@ class SmartStrategy(override val playerBoard: Board, private val possibleShips: 
         val bestPos = mutableListOf<Position>()
         var bestProbability = 0
 
-        //store all equal probability positions and the pick random to make it less deterministic
+        //store all equal probability positions and the pick one randomly to make the AI less deterministic
         for (x in probabilityMatrix.indices)
             for (y in probabilityMatrix[0].indices)
                 if (probabilityMatrix[x][y] > bestProbability){
@@ -63,6 +63,7 @@ class SmartStrategy(override val playerBoard: Board, private val possibleShips: 
         return selectedPos
     }
 
+    //helper to check if a ship could be placed in a position and add the corresponding values to the probability matrix
     private fun couldBeHitAt(length: Int, x: Int, y: Int) {
         var couldBePlacedHorizontally = true
         var couldBePlacedVertically = true
@@ -91,6 +92,7 @@ class SmartStrategy(override val playerBoard: Board, private val possibleShips: 
         }
     }
 
+    //helper to check if a ship could be placed in a position and add the corresponding values to the probability matrix
     private fun couldBePlacedAt(length: Int, x: Int, y: Int) {
         var couldBePlacedHorizontally = true
         var couldBePlacedVertically = true
@@ -109,6 +111,7 @@ class SmartStrategy(override val playerBoard: Board, private val possibleShips: 
         }
     }
 
+    //stores the information received in a matrix that mirrors the board and keep track of the remaining ships
     override fun shotResults(hitShip: Boolean, sunkShip: Ship?) {
         var indexes = playerBoard.getCellIndexesAtPosition(Position(lastPosX.toFloat(), lastPosY.toFloat()))
         if (indexes != null){

@@ -1,7 +1,5 @@
 package es.uji.al375496.ujiseabattle.model.data
 
-import android.util.Log
-import java.util.*
 import kotlin.math.floor
 import kotlin.math.round
 
@@ -9,6 +7,7 @@ data class Board (var position: Position, val width: Int, val height: Int){
     val ships = mutableListOf<Ship>()
     val cells = Array(width) { x-> Array(height) { y -> Cell(x, y)}}
 
+    // returns the position to place something in a cell when given a position inside that cell
     fun getCellPosition(pos: Position) : Position?{
         return if (pos.x >= position.x && pos.x < position.x + width && pos.y >= position.y && pos.y < position.y + height)
             Position(floor(pos.x), floor(pos.y))
@@ -16,6 +15,7 @@ data class Board (var position: Position, val width: Int, val height: Int){
             null
     }
 
+    // returns the numbers corresponding to the indexes of a cell when given a position inside that cell
     fun getCellIndexesAtPosition(pos: Position) : Position?{
         val cellPos = getCellPosition(pos)
         if (cellPos != null)
@@ -23,6 +23,7 @@ data class Board (var position: Position, val width: Int, val height: Int){
         return null
     }
 
+    // returns the position to place something in the closest cell
     fun getRoundedCellPosition(pos: Position) : Position?{
         return if (pos.x > position.x - 1 && pos.x < position.x + width && pos.y > position.y - 1 && pos.y < position.y + height){
             Position(maxOf(minOf(round(pos.x), position.x + width - 1f), position.x), maxOf(minOf(round(pos.y), position.y + height - 1f), position.y))
@@ -31,28 +32,27 @@ data class Board (var position: Position, val width: Int, val height: Int){
             null
     }
 
+    //tries to add a ship at the given position, returns true if successful
     fun addShip(ship: Ship, pos: Position): Boolean{
-        val cellIndexes = getCellIndexesAtPosition(pos)
-        if (cellIndexes != null){
-            val x = cellIndexes.x.toInt()
-            val y = cellIndexes.y.toInt()
+        if (canAddShip(ship, pos))
+        {
+            val cellIndexes = getCellIndexesAtPosition(pos)
+            if (cellIndexes != null){
+                val x = cellIndexes.x.toInt()
+                val y = cellIndexes.y.toInt()
 
-            //check that the cells are available
-            for (i: Int in 0 until ship.length)
-                if (ship.isHorizontal() && (x+i >= cells.size || cells[x+i][y].ship != null) || !ship.isHorizontal() && (y+i >= cells[0].size || cells[x][y+i].ship != null))
-                    return false
-
-            //place the ship
-            ships.add(ship)
-            val cellPos = getCellPosition(pos)
-            if (cellPos != null){
-                ship.position = cellPos
-                for (i: Int in 0 until ship.length)
-                    if (ship.isHorizontal())
-                        cells[x+i][y].ship = ship
-                    else
-                        cells[x][y+i].ship = ship
-                return true
+                //place the ship
+                ships.add(ship)
+                val cellPos = getCellPosition(pos)
+                if (cellPos != null){
+                    ship.position = cellPos
+                    for (i: Int in 0 until ship.length)
+                        if (ship.isHorizontal())
+                            cells[x+i][y].ship = ship
+                        else
+                            cells[x][y+i].ship = ship
+                    return true
+                }
             }
         }
         return false
@@ -75,6 +75,7 @@ data class Board (var position: Position, val width: Int, val height: Int){
         return false
     }
 
+    //tries to get a ship from the board in a given position, returns null if not found
     fun getShipAt(pos: Position): Ship? {
         val cellIndexes= getCellIndexesAtPosition(pos)
 
@@ -86,6 +87,7 @@ data class Board (var position: Position, val width: Int, val height: Int){
         return null
     }
 
+    //tries to rotate a ship in a given position if it exists and has space to be rotated, returns true is successful
     fun rotateShipAt(pos: Position): Boolean{
         //try to get the ship
         val ship: Ship = getShipAt(pos) ?: return false
@@ -118,6 +120,7 @@ data class Board (var position: Position, val width: Int, val height: Int){
         return false
     }
 
+    //tries to move a ship in a given position to another given position if it exists and has space to be rotated, returns true is successful
     fun moveShip(from: Position, to: Position): Boolean{
         //try to get the ship
         val ship: Ship = getShipAt(from) ?: return false
@@ -162,7 +165,7 @@ data class Board (var position: Position, val width: Int, val height: Int){
         return false
     }
 
-    //true if hits ship, false if hits water, null if not in board
+    //returns true if it hits a ship, false if hits water and null if it hits outside the board
     fun tryHitAt(pos: Position) : Boolean? {
         val cellIndexes = getCellIndexesAtPosition(pos)
         if (cellIndexes != null){

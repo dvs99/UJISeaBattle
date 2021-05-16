@@ -1,6 +1,5 @@
 package es.uji.al375496.ujiseabattle.model.data
 
-import android.graphics.Bitmap
 import es.uji.al375496.ujiseabattle.Assets
 
 data class Ship (var position: Position, val length: Int, private var isHorizontal: Boolean) {
@@ -58,7 +57,6 @@ data class Ship (var position: Position, val length: Int, private var isHorizont
                 if (pos.isSameCell(Position(position.x, position.y + i)))
                     return true
             }
-
         return false
     }
 
@@ -71,7 +69,7 @@ data class Ship (var position: Position, val length: Int, private var isHorizont
         return isHorizontal
     }
 
-    //Assumes it has been checked to be actually a hit that hasn't been hit before and is valid for this ship
+    //assumes it has been checked to be actually a hit that hasn't been hit before and is valid for this ship
     fun hit(pos: Position){
         hits.add(pos.copy())
         if (hits.size == length)
