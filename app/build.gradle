@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId "es.uji.al375496.ujiseabattle"
-        minSdkVersion 26
+        minSdkVersion 29
         targetSdkVersion 30
         versionCode 1
         versionName "1.0"
